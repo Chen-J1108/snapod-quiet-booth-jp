@@ -1,0 +1,28 @@
+[data-anime] {
+  backface-visibility: hidden;
+}
+
+[data-anime='hover'] {
+  will-change: transform;
+}
+
+[data-anime='svg-draw'],
+[data-anime='perimeter-scan'] {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[data-anime='sound-bars'] > * {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anime] {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

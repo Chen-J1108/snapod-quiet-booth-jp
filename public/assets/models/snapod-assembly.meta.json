@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-08-10T09:52:13.733Z",
+  "sourceFile": "Snapod(小号)静音仓-W1000D1000H2300-总装 - 门樘-固定桌板-常规线路-可拆侧板.stp",
+  "sourceSha256": "79ab7e5de60f5f7329a8d52c12e3778229ad92424691b7e2e64c09561d25d6f8",
+  "sourceBytes": 13644955,
+  "dimensionsMeters": [
+    1.0481,
+    2.3196,
+    1
+  ],
+  "sourceMeshes": 242,
+  "triangles": 382145,
+  "groups": [
+    {
+      "id": "base",
+      "label": "底座・換気",
+      "childIndexes": [
+        0,
+        14,
+        20,
+        21,
+        23
+      ],
+      "explodeOffset": [
+        0,
+        -0.62,
+        0
+      ],
+      "meshCount": 43,
+      "triangleCount": 74204
+    },
+    {
+      "id": "frame",
+      "label": "コーナーフレーム",
+      "childIndexes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        15
+      ],
+      "explodeOffset": [
+        0,
+        0,
+        0
+      ],
+      "meshCount": 8,
+      "triangleCount": 23376
+    },
+    {
+      "id": "roof",
+      "label": "トップユニット",
+      "childIndexes": [
+        8,
+        9,
+        10,
+        12,
+        13
+      ],
+      "explodeOffset": [
+        0,
+        0.78,
+        0
+      ],
+      "meshCount": 42,
+      "triangleCount": 149400
+    },
+    {
+      "id": "fixed-glass",
+      "label": "固定ガラス",
+      "childIndexes": [
+        11
+      ],
+      "explodeOffset": [
+        0.72,
+        0,
+        0
+      ],
+      "meshCount": 16,
+      "triangleCount": 15748
+    },
+    {
+      "id": "door",
+      "label": "ドアユニット",
+      "childIndexes": [
+        16
+      ],
+      "explodeOffset": [
+        -0.82,
+        0,
+        -0.06
+      ],
+      "meshCount": 35,
+      "triangleCount": 63521
+    },
+    {
+      "id": "rear-wall",
+      "label": "背面吸音パネル",
+      "childIndexes": [
+        17,
+        24,
+        25
+      ],
+      "explodeOffset": [
+        0,
+        0,
+        -0.78
+      ],
+      "meshCount": 58,
+      "triangleCount": 37252
+    },
+    {
+      "id": "service-wall",
+      "label": "設備側パネル",
+      "childIndexes": [
+        18,
+        19,
+        22
+      ],
+      "explodeOffset": [
+        0,
+        0,
+        0.78
+      ],
+      "meshCount": 40,
+      "triangleCount": 18644
+    }
+  ],
+  "rawGlbBytes": 11091996,
+  "optimizedGlbBytes": 2115440,
+  "compression": "EXT_meshopt_compression"
+}
