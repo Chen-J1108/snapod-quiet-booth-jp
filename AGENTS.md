@@ -25,4 +25,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - The exploded-view showcase appears after the specification strip and before installation scenes, using the project-local 5-second Seedance exploded-view video with muted inline looping, an accessible play/pause control, and a reduced-motion pause state.
 - Customer-facing copy is Japanese-first and written for a Japanese ecommerce landing page: concise CTAs, natural business Japanese, localized units, and conditional notes for performance claims.
 - Primary CTA buttons use a technical hover/focus treatment: the pill radius resolves into a fine rectangular outline, four crosshair corner marks appear just outside the border, and the whole control lifts only subtly.
+- CAD conversion must use the versioned geometry-fingerprint manifest in `scripts/snapod-assembly.manifest.mjs`; positional `childIndexes` are not stable identifiers and must not return.
+- The brand GLB carries the seekable `SNAPOD_INSTALL_V1` clip. Keep the door jamb static while the door leaf rotates around its declared Y-axis hinge, and preserve the documented installation sequence when changing the clip.
+- Keep the internal CAD workbench as the separate `engineering:*` Vite entry. Never copy source STEP/IGES/BREP files or the OCCT/WASM engineering runtime into the public brand build.
 - Do not show the numeric `00—100` progress readout in the lower-right corner of the scroll story; the left chapter rail remains the only visible progress navigation.

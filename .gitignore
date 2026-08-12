@@ -5,4 +5,5 @@ output/
 tmp/
 qa/
 dist/
+dist-engineering/
 *.log

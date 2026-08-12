@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 const MODEL_URL = "/assets/models/snapod-assembly.glb";
+const INSTALL_CLIP_NAME = "SNAPOD_INSTALL_V1";
 
 function smoothstep(value) {
   const t = Math.min(1, Math.max(0, value));
@@ -87,6 +88,8 @@ export function SnapodScrollModel({ stageRef }) {
     let disposed = false;
     let animationFrame = 0;
     let modelRoot = null;
+    let assemblyMixer = null;
+    let assemblyClip = null;
     let currentExplosion = reducedMotion ? 1 : 0;
     const movingGroups = [];
     const loader = new GLTFLoader();
@@ -118,6 +121,13 @@ export function SnapodScrollModel({ stageRef }) {
             base: group.position.clone(),
             offset: new THREE.Vector3(...offset),
           });
+        }
+        assemblyClip = gltf.animations.find((clip) => clip.name === INSTALL_CLIP_NAME) || null;
+        if (assemblyClip) {
+          assemblyMixer = new THREE.AnimationMixer(modelRoot);
+          const action = assemblyMixer.clipAction(assemblyClip);
+          action.play();
+          assemblyMixer.setTime(assemblyClip.duration * (1 - currentExplosion));
         }
         scene.add(modelRoot);
         setLoadProgress(100);
@@ -156,12 +166,16 @@ export function SnapodScrollModel({ stageRef }) {
       const sceneLight = Number.parseFloat(styles?.getPropertyValue("--light")) || 0;
       currentExplosion += (smoothstep(requestedExplosion) - currentExplosion) * 0.085;
 
-      for (const { group, base, offset } of movingGroups) {
-        group.position.set(
-          base.x + offset.x * currentExplosion,
-          base.y + offset.y * currentExplosion,
-          base.z + offset.z * currentExplosion,
-        );
+      if (assemblyMixer && assemblyClip) {
+        assemblyMixer.setTime(assemblyClip.duration * (1 - currentExplosion));
+      } else {
+        for (const { group, base, offset } of movingGroups) {
+          group.position.set(
+            base.x + offset.x * currentExplosion,
+            base.y + offset.y * currentExplosion,
+            base.z + offset.z * currentExplosion,
+          );
+        }
       }
 
       if (modelRoot) {

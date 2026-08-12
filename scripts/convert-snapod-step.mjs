@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import occtImport from "occt-import-js";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
+import { SNAPOD_ASSEMBLY_MANIFEST } from "./snapod-assembly.manifest.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(here, "..");
@@ -16,16 +17,8 @@ const tempDir = path.join(projectRoot, ".tmp", "cad-conversion");
 const rawPath = path.join(tempDir, "snapod-assembly.raw.glb");
 const outputPath = path.join(modelDir, "snapod-assembly.glb");
 const metadataPath = path.join(modelDir, "snapod-assembly.meta.json");
-
-const GROUPS = [
-  { id: "base", label: "底座・換気", childIndexes: [0, 14, 20, 21, 23], explode: [0, -0.62, 0] },
-  { id: "frame", label: "コーナーフレーム", childIndexes: [1, 2, 3, 4, 5, 6, 7, 15], explode: [0, 0, 0] },
-  { id: "roof", label: "トップユニット", childIndexes: [8, 9, 10, 12, 13], explode: [0, 0.78, 0] },
-  { id: "fixed-glass", label: "固定ガラス", childIndexes: [11], explode: [0.72, 0, 0] },
-  { id: "door", label: "ドアユニット", childIndexes: [16], explode: [-0.82, 0, -0.06] },
-  { id: "rear-wall", label: "背面吸音パネル", childIndexes: [17, 24, 25], explode: [0, 0, -0.78] },
-  { id: "service-wall", label: "設備側パネル", childIndexes: [18, 19, 22], explode: [0, 0, 0.78] },
-];
+const CLIP_NAME = "SNAPOD_INSTALL_V1";
+const CLIP_DURATION = 10;
 
 class NodeFileReader {
   readAsArrayBuffer(blob) {
@@ -80,6 +73,31 @@ function getBounds(meshes) {
   };
 }
 
+function meshFingerprint(mesh) {
+  const hash = createHash("sha256");
+  const positions = mesh.attributes.position.array;
+  const positionBytes = Buffer.allocUnsafe(positions.length * 4);
+  for (let index = 0; index < positions.length; index += 1) {
+    positionBytes.writeInt32LE(Math.round(positions[index] * 1e6), index * 4);
+  }
+  hash.update(positionBytes);
+
+  const indices = mesh.index.array;
+  const indexBytes = Buffer.allocUnsafe(indices.length * 4);
+  for (let index = 0; index < indices.length; index += 1) {
+    indexBytes.writeUInt32LE(indices[index], index * 4);
+  }
+  hash.update(indexBytes);
+  return hash.digest("hex").slice(0, 20);
+}
+
+function nodeFingerprint(node, meshes) {
+  const meshFingerprints = (node.meshes || [])
+    .map((meshIndex) => meshFingerprint(meshes[meshIndex]))
+    .sort();
+  return createHash("sha256").update(meshFingerprints.join("|")).digest("hex").slice(0, 20);
+}
+
 function dominantColor(sourceMesh) {
   if (sourceMesh.color) return sourceMesh.color;
   const weighted = new Map();
@@ -129,15 +147,15 @@ function createMaterial(color, materialCache) {
   return material;
 }
 
-function createMesh(sourceMesh, meshIndex, center, materialCache) {
+function createMesh(sourceMesh, meshIndex, center, materialCache, localOrigin = [0, 0, 0]) {
   const geometry = new THREE.BufferGeometry();
   const sourcePositions = sourceMesh.attributes.position.array;
   const positions = new Float32Array(sourcePositions.length);
   for (let index = 0; index < sourcePositions.length; index += 3) {
     const point = mappedPoint(sourcePositions, index);
-    positions[index] = point[0] - center[0];
-    positions[index + 1] = point[1] - center[1];
-    positions[index + 2] = point[2] - center[2];
+    positions[index] = point[0] - center[0] - localOrigin[0];
+    positions[index + 1] = point[1] - center[1] - localOrigin[1];
+    positions[index + 2] = point[2] - center[2] - localOrigin[2];
   }
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
@@ -163,21 +181,77 @@ function createMesh(sourceMesh, meshIndex, center, materialCache) {
 
   const material = createMaterial(dominantColor(sourceMesh), materialCache);
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.name = `CAD_${String(meshIndex).padStart(3, "0")}`;
+  const fingerprint = meshFingerprint(sourceMesh);
+  mesh.name = `CAD_${fingerprint}`;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
+  mesh.userData.stableId = `mesh:${fingerprint}`;
   mesh.userData.sourceName = cleanText(sourceMesh.name);
+  mesh.userData.sourceMeshFingerprint = fingerprint;
   mesh.userData.sourceMeshIndex = meshIndex;
   return mesh;
 }
 
-async function exportBinary(scene) {
+function makeGroup(name, userData = {}) {
+  const group = new THREE.Group();
+  group.name = name;
+  Object.assign(group.userData, userData);
+  return group;
+}
+
+function trackTimes(start, end) {
+  const values = [0, start * CLIP_DURATION, end * CLIP_DURATION, CLIP_DURATION];
+  return [...new Set(values)].sort((a, b) => a - b);
+}
+
+function positionTrack(object, start, end, exploded) {
+  const times = trackTimes(start, end);
+  const values = [];
+  for (const time of times) {
+    const assembled = end <= start ? 1 : THREE.MathUtils.smoothstep(time / CLIP_DURATION, start, end);
+    values.push(...exploded.map((value) => value * (1 - assembled)));
+  }
+  return new THREE.VectorKeyframeTrack(`${object.name}.position`, times, values);
+}
+
+function quaternionTrack(object, start, end, explodedQuaternion, assembledQuaternion) {
+  const times = trackTimes(start, end);
+  const values = [];
+  for (const time of times) {
+    const assembled = end <= start ? 1 : THREE.MathUtils.smoothstep(time / CLIP_DURATION, start, end);
+    const value = explodedQuaternion.clone().slerp(assembledQuaternion, assembled);
+    values.push(value.x, value.y, value.z, value.w);
+  }
+  return new THREE.QuaternionKeyframeTrack(`${object.name}.quaternion`, times, values);
+}
+
+function assertManifestCoverage(assembly, meshes) {
+  const seen = new Map();
+  for (const node of assembly.children || []) {
+    const fingerprint = nodeFingerprint(node, meshes);
+    if (seen.has(fingerprint)) {
+      throw new Error(`Ambiguous STEP node fingerprint ${fingerprint}.`);
+    }
+    seen.set(fingerprint, node);
+  }
+
+  const expected = new Set(Object.keys(SNAPOD_ASSEMBLY_MANIFEST.nodes));
+  const unknown = [...seen.keys()].filter((fingerprint) => !expected.has(fingerprint));
+  const missing = [...expected].filter((fingerprint) => !seen.has(fingerprint));
+  if (unknown.length || missing.length) {
+    throw new Error(`Assembly manifest mismatch. Unknown: ${unknown.join(", ") || "none"}; missing: ${missing.join(", ") || "none"}.`);
+  }
+  return seen;
+}
+
+async function exportBinary(scene, animations) {
   const exporter = new GLTFExporter();
   return exporter.parseAsync(scene, {
     binary: true,
     onlyVisible: false,
     trs: true,
     includeCustomExtensions: true,
+    animations,
   });
 }
 
@@ -188,6 +262,11 @@ async function main() {
 
   console.log(`Reading STEP: ${sourcePath}`);
   const sourceBytes = fs.readFileSync(sourcePath);
+  const sourceSha256 = createHash("sha256").update(sourceBytes).digest("hex");
+  if (sourceSha256 !== SNAPOD_ASSEMBLY_MANIFEST.sourceSha256) {
+    throw new Error(`STEP source hash does not match manifest ${SNAPOD_ASSEMBLY_MANIFEST.id}.`);
+  }
+
   const occt = await occtImport();
   const result = occt.ReadStepFile(sourceBytes, {
     linearUnit: "meter",
@@ -198,57 +277,133 @@ async function main() {
   if (!result.success) throw new Error("OpenCascade could not triangulate the STEP assembly.");
 
   const assembly = result.root.children?.[0];
-  if (!assembly || assembly.children.length < 26) {
-    throw new Error(`Unexpected assembly hierarchy: ${assembly?.children?.length || 0} top-level children.`);
-  }
-
+  if (!assembly) throw new Error("Unexpected empty STEP assembly hierarchy.");
+  const nodesByFingerprint = assertManifestCoverage(assembly, result.meshes);
   const bounds = getBounds(result.meshes);
   const materialCache = new Map();
   const scene = new THREE.Scene();
   scene.name = "SNAPOD_SPD01";
   scene.userData.source = path.basename(sourcePath);
+  scene.userData.manifestId = SNAPOD_ASSEMBLY_MANIFEST.id;
   scene.userData.dimensionsMeters = bounds.size.map((value) => Number(value.toFixed(5)));
+  scene.userData.animationClip = CLIP_NAME;
 
-  const assignedChildren = new Set();
-  const groupStats = [];
-  for (const definition of GROUPS) {
-    const group = new THREE.Group();
-    group.name = `SNAPOD_${definition.id}`;
-    group.userData.label = definition.label;
-    group.userData.explodeOffset = definition.explode;
-    let triangleCount = 0;
-    let meshCount = 0;
-
-    for (const childIndex of definition.childIndexes) {
-      assignedChildren.add(childIndex);
-      const sourceNode = assembly.children[childIndex];
-      for (const meshIndex of sourceNode.meshes || []) {
-        const sourceMesh = result.meshes[meshIndex];
-        triangleCount += sourceMesh.index.array.length / 3;
-        meshCount += 1;
-        group.add(createMesh(sourceMesh, meshIndex, bounds.center, materialCache));
-      }
-    }
-
-    groupStats.push({
-      id: definition.id,
+  const moduleGroups = new Map();
+  const moduleStats = new Map();
+  for (const [id, definition] of Object.entries(SNAPOD_ASSEMBLY_MANIFEST.modules)) {
+    const group = makeGroup(`SNAPOD_${id}`, {
+      stableId: `module:${id}`,
+      moduleId: id,
       label: definition.label,
-      childIndexes: definition.childIndexes,
-      explodeOffset: definition.explode,
-      meshCount,
-      triangleCount,
+      installRange: definition.install,
+      explodeOffset: definition.explodeOffset,
     });
+    moduleGroups.set(id, group);
+    moduleStats.set(id, { id, label: definition.label, meshCount: 0, triangleCount: 0 });
     scene.add(group);
   }
 
-  const unassigned = assembly.children
-    .map((_, index) => index)
-    .filter((index) => !assignedChildren.has(index));
-  if (unassigned.length) throw new Error(`Unassigned top-level STEP nodes: ${unassigned.join(", ")}`);
+  const tracks = [];
+  const animatedModules = ["frame-core", "rear-wall", "service-wall", "fixed-glass", "roof", "door-jamb", "carpet"];
+  for (const moduleId of animatedModules) {
+    const definition = SNAPOD_ASSEMBLY_MANIFEST.modules[moduleId];
+    tracks.push(positionTrack(moduleGroups.get(moduleId), ...definition.install, definition.explodeOffset));
+  }
 
+  const assignedMeshes = new Set();
+  const doorJambFingerprints = new Set(SNAPOD_ASSEMBLY_MANIFEST.door.jambMeshFingerprints);
+  const doorNodeFingerprint = Object.entries(SNAPOD_ASSEMBLY_MANIFEST.nodes)
+    .find(([, definition]) => definition.moduleId === "door-special")?.[0];
+  const doorNode = nodesByFingerprint.get(doorNodeFingerprint);
+  if (!doorNode) throw new Error("Door assembly node was not resolved by the manifest.");
+
+  const doorInstall = makeGroup("SNAPOD_door-leaf_install", {
+    stableId: "joint:door-install",
+    jointType: "installation",
+  });
+  moduleGroups.get("door-leaf").add(doorInstall);
+  const hingeSource = SNAPOD_ASSEMBLY_MANIFEST.door.hingePositionMeters;
+  const hingeLocal = [hingeSource[0] - bounds.center[0], 0, hingeSource[2] - bounds.center[2]];
+  const doorPivot = makeGroup("SNAPOD_door-leaf_pivot", {
+    stableId: "joint:door-hinge",
+    jointType: "revolute",
+    axis: SNAPOD_ASSEMBLY_MANIFEST.door.hingeAxis,
+    pivotMeters: hingeLocal.map((value) => Number(value.toFixed(6))),
+  });
+  doorPivot.position.set(...hingeLocal);
+  doorInstall.add(doorPivot);
+
+  const doorDefinition = SNAPOD_ASSEMBLY_MANIFEST.modules["door-leaf"];
+  tracks.push(positionTrack(doorInstall, 0.68, 0.8, doorDefinition.explodeOffset));
+  const hingeAxis = new THREE.Vector3(...SNAPOD_ASSEMBLY_MANIFEST.door.hingeAxis).normalize();
+  const openQuaternion = new THREE.Quaternion().setFromAxisAngle(
+    hingeAxis,
+    THREE.MathUtils.degToRad(SNAPOD_ASSEMBLY_MANIFEST.door.openAngleDegrees),
+  );
+  tracks.push(quaternionTrack(doorPivot, 0.74, 0.88, openQuaternion, new THREE.Quaternion()));
+
+  function addSourceMesh(moduleId, parent, sourceMeshIndex, partId, localOrigin = [0, 0, 0]) {
+    if (assignedMeshes.has(sourceMeshIndex)) throw new Error(`STEP mesh ${sourceMeshIndex} was assigned more than once.`);
+    assignedMeshes.add(sourceMeshIndex);
+    const sourceMesh = result.meshes[sourceMeshIndex];
+    const mesh = createMesh(sourceMesh, sourceMeshIndex, bounds.center, materialCache, localOrigin);
+    mesh.userData.partId = partId;
+    mesh.userData.moduleId = moduleId;
+    parent.add(mesh);
+    const stats = moduleStats.get(moduleId);
+    stats.meshCount += 1;
+    stats.triangleCount += sourceMesh.index.array.length / 3;
+  }
+
+  for (const [fingerprint, node] of nodesByFingerprint) {
+    const definition = SNAPOD_ASSEMBLY_MANIFEST.nodes[fingerprint];
+    if (definition.moduleId === "door-special") continue;
+    const moduleGroup = moduleGroups.get(definition.moduleId);
+    const partGroup = makeGroup(`SNAPOD_PART_${definition.partId}`, {
+      stableId: `part:${definition.partId}`,
+      partId: definition.partId,
+      moduleId: definition.moduleId,
+      sourceNodeFingerprint: fingerprint,
+      sourceName: cleanText(node.name),
+    });
+    moduleGroup.add(partGroup);
+
+    if (definition.moduleId === "column-covers") {
+      const install = SNAPOD_ASSEMBLY_MANIFEST.modules["column-covers"].install;
+      tracks.push(positionTrack(partGroup, ...install, definition.explodeOffset));
+    }
+
+    for (const sourceMeshIndex of node.meshes || []) {
+      const sourceMesh = result.meshes[sourceMeshIndex];
+      if (meshFingerprint(sourceMesh) === SNAPOD_ASSEMBLY_MANIFEST.carpetMeshFingerprint) {
+        addSourceMesh("carpet", moduleGroups.get("carpet"), sourceMeshIndex, "floor-carpet");
+      } else {
+        addSourceMesh(definition.moduleId, partGroup, sourceMeshIndex, definition.partId);
+      }
+    }
+  }
+
+  const resolvedDoorJamb = new Set();
+  for (const sourceMeshIndex of doorNode.meshes || []) {
+    const fingerprint = meshFingerprint(result.meshes[sourceMeshIndex]);
+    if (doorJambFingerprints.has(fingerprint)) {
+      resolvedDoorJamb.add(fingerprint);
+      addSourceMesh("door-jamb", moduleGroups.get("door-jamb"), sourceMeshIndex, "door-jamb");
+    } else {
+      addSourceMesh("door-leaf", doorPivot, sourceMeshIndex, "door-leaf", hingeLocal);
+    }
+  }
+  const missingDoorJamb = [...doorJambFingerprints].filter((fingerprint) => !resolvedDoorJamb.has(fingerprint));
+  if (missingDoorJamb.length) throw new Error(`Door jamb mesh selectors did not resolve: ${missingDoorJamb.join(", ")}`);
+  if (assignedMeshes.size !== result.meshes.length) {
+    const missing = result.meshes.map((_, index) => index).filter((index) => !assignedMeshes.has(index));
+    throw new Error(`Unassigned STEP meshes: ${missing.join(", ")}`);
+  }
+
+  const clip = new THREE.AnimationClip(CLIP_NAME, CLIP_DURATION, tracks);
   const totalTriangles = result.meshes.reduce((sum, mesh) => sum + mesh.index.array.length / 3, 0);
   console.log(`Triangulated ${result.meshes.length} meshes / ${Math.round(totalTriangles).toLocaleString()} triangles.`);
-  const glb = await exportBinary(scene);
+  const glb = await exportBinary(scene, [clip]);
   fs.writeFileSync(rawPath, Buffer.from(glb));
 
   const gltfTransformCli = path.join(projectRoot, "node_modules", "@gltf-transform", "cli", "bin", "cli.js");
@@ -273,13 +428,30 @@ async function main() {
 
   const metadata = {
     generatedAt: new Date().toISOString(),
+    manifestId: SNAPOD_ASSEMBLY_MANIFEST.id,
+    fingerprintVersion: SNAPOD_ASSEMBLY_MANIFEST.fingerprintVersion,
     sourceFile: path.basename(sourcePath),
-    sourceSha256: createHash("sha256").update(sourceBytes).digest("hex"),
+    sourceSha256,
     sourceBytes: sourceBytes.length,
     dimensionsMeters: bounds.size.map((value) => Number(value.toFixed(5))),
     sourceMeshes: result.meshes.length,
     triangles: totalTriangles,
-    groups: groupStats,
+    modules: [...moduleStats.values()].map((stats) => ({
+      ...stats,
+      triangleCount: Math.round(stats.triangleCount),
+      installRange: SNAPOD_ASSEMBLY_MANIFEST.modules[stats.id].install,
+      explodeOffset: SNAPOD_ASSEMBLY_MANIFEST.modules[stats.id].explodeOffset,
+    })),
+    doorJoint: {
+      pivotMeters: hingeLocal.map((value) => Number(value.toFixed(6))),
+      axis: SNAPOD_ASSEMBLY_MANIFEST.door.hingeAxis,
+      openAngleDegrees: SNAPOD_ASSEMBLY_MANIFEST.door.openAngleDegrees,
+    },
+    animation: {
+      clip: CLIP_NAME,
+      durationSeconds: CLIP_DURATION,
+      direction: "disassembled-to-assembled",
+    },
     rawGlbBytes: fs.statSync(rawPath).size,
     optimizedGlbBytes: fs.statSync(outputPath).size,
     compression: "EXT_meshopt_compression",
