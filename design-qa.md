@@ -1,105 +1,125 @@
-# Design QA
+# SNAPOD / Lightweight visual QA
 
-## Review scope
+Status: **PASSED**
 
-- Prototype: `http://127.0.0.1:4174/`
-- Review date: 2026-08-07
-- Source direction: the live Lightweight opening sequence and scroll choreography, browser annotations, and the supplied SNAPOD exploded-view video.
-- Responsive states: default desktop viewport and `390 × 844` mobile viewport.
-- Final evidence: the prior annotation and exploded-view captures plus `qa/reference-lightweight-loader-desktop.png`, `qa/reference-lightweight-product-reveal-mobile.png`, `qa/reference-lightweight-title-reveal-mobile.png`, `qa/reference-lightweight-hero-mobile.png`, `qa/intro-loader-desktop.png`, `qa/loader-progress-desktop.png`, `qa/intro-product-desktop.png`, `qa/intro-title-desktop.png`, `qa/intro-hero-desktop.png`, `qa/intro-loader-mobile.png`, `qa/intro-product-mobile.png`, `qa/intro-title-mobile.png`, `qa/intro-hero-mobile.png`, `qa/layers-exploded-desktop.png`, `qa/layers-exploded-mobile.png`, the `qa/layers-scroll-transition-*` captures, and the `qa/layers-single-object-*` captures.
+Reference: `https://lightweight.info/en`
 
-## Annotation acceptance
+Scope: visual and interaction matching for the public SNAPOD brand page. Lightweight brand assets, copy, fonts, and product media were deliberately not copied; the comparison covers composition, spacing, section rhythm, sticky-scroll behavior, tone changes, and navigation states.
 
-1. Opening product scale and angle
-   - The product enters at a 45-degree angle.
-   - Desktop width is approximately half the viewport before rotation; mobile is proportionally reduced to avoid horizontal clipping.
-   - The tilt resolves into the established chapter choreography after the opening section.
-2. Transparent product renders
-   - Sage, sand, and coral renders are project-local PNG cutouts with alpha transparency.
-   - White studio backgrounds are absent in the dark hero, color chapter, and final form chapter.
-3. Local scene video
-   - The first wide placement card uses `public/assets/video/snapod-story.mp4`.
-   - The local H.264 asset uses muted autoplay, looping, inline playback, metadata preload, and a local poster image.
-4. Music-wave background
-   - The former orbit/grid graphic is replaced by a layered animated waveform and equalizer field drawn on canvas.
-   - Wave color follows the story transition and amplitude responds to scroll progress.
-   - Reduced-motion users receive a static waveform frame.
-5. Exploded-view structure showcase
-   - The supplied 10-second H.264 video is placed after product specifications and before installation scenes.
-   - It autoplays muted, loops inline, includes a local poster, and offers an accessible play/pause control.
-   - Reduced-motion users receive a paused poster state that they can start manually.
-6. Lightweight-inspired opening sequence
-   - Fresh top-of-page loads begin with a centered progress bar and live percentage on black, followed by a full-screen product close-up that scales and rotates into the established hero position.
-   - Progress follows completion of critical product images, scene images, local font readiness, and both local videos' metadata, with a short minimum display time to prevent flashing.
-   - At 100%, the loader wipes upward while the product sequence begins; header, frame, navigation rail, waveform, eyebrow, horizontally masked headline, and CTA then enter in separate phases.
-   - The sequence is skipped for reduced-motion users and non-top hash targets; scrolling is unlocked before the CTA becomes interactive.
+## Matched comparison set
 
-## Japanese localization review
+| State | Reference | SNAPOD implementation | Result |
+| --- | --- | --- | --- |
+| Desktop hero | `qa/lightweight/source-desktop-hero.png` (1425 × 891) | `qa/snapod/implementation-desktop-hero-final.png` (1424 × 891) | Pass |
+| Desktop exploded stage | `qa/lightweight/source-desktop-07-y4900.png` | `qa/snapod/implementation-desktop-structure-final.png` | Pass |
+| Mobile hero | `qa/lightweight/source-mobile-hero.png` (375 × 812) | `qa/snapod/implementation-mobile-hero-final.png` (375 × 812) | Pass |
+| Mobile menu | `qa/lightweight/source-mobile-menu.png` (375 × 812) | `qa/snapod/implementation-mobile-menu-final.png` (375 × 812) | Pass |
+| Mobile search | `qa/lightweight/source-mobile-search.png` (375 × 812) | `qa/snapod/implementation-mobile-search-final.png` (375 × 812) | Pass |
 
-- Document language, metadata, navigation, search, chapter labels, headings, body copy, specifications, captions, CTAs, accessibility labels, and footer copy are Japanese.
-- Copy uses concise Japanese ecommerce phrasing while retaining the SNAPOD and SPD01 product names.
-- Performance claims include qualifiers such as `最大`, `目安`, and condition notes instead of unconditional guarantees.
-- Units use localized, readable notation: `最大 30 dB`, `40 m³/h`, `1 台`, and `最短 5 分`.
-- Search was tested with `換気`; it returned the localized material result.
+Side-by-side review inputs:
 
-## Visual findings and fixes
+- `qa/snapod/compare-desktop-hero.png`
+- `qa/snapod/compare-desktop-structure.png`
+- `qa/snapod/compare-mobile-hero.png`
+- `qa/snapod/compare-mobile-menu.png`
 
-1. `[P2]` The color chapter rail initially landed before the product completed its transition, causing text overlap.
-   - Fix: moved the chapter target to progress `0.72`.
-   - Result: resolved in `qa/annotation-desktop-color.png`.
-2. `[P2]` The final form chapter inherited the opening 45-degree rotation.
-   - Fix: explicitly reset product rotation to `0deg` in the final scroll segment.
-   - Result: resolved in `qa/annotation-desktop-form.png`.
-3. `[P2]` The Japanese placement headline wrapped to an orphaned final character on mobile.
-   - Fix: adjusted the mobile display type scale while preserving the desktop hierarchy.
-   - Result: resolved in `qa/annotation-mobile-video.png`.
-4. `[P2]` The Layers chapter allowed the heading and material callouts to cross the product during the handoff.
-   - Fix: completed the product move to the right by progress `0.40`, aligned the callouts outside its silhouette, and shortened the leader lines.
-   - Result: resolved in `qa/annotation-v2-desktop-layers.png`.
-5. `[P2]` The opening product sat too high in the viewport.
-   - Fix: lowered the opening composition while preserving its scale and tilt.
-   - Result: resolved in `qa/annotation-v2-desktop-hero.png` and `qa/annotation-v2-mobile-hero.png`.
-6. `[P2]` The Focus product silhouette crossed the headline and body copy.
-   - Fix: shifted the product into the left column early in the transition, reduced the Focus-stage scale, and constrained copy to a dedicated `43vw` right column.
-   - Result: resolved in `qa/annotation-v3-desktop-focus.png`.
-7. `[P2]` The opening product still began behind the CTA.
-   - Fix: moved the desktop product anchor to `66vh`, placing its first visible edge below the CTA and allowing intentional bottom cropping; the mobile composition is unchanged.
-   - Result: resolved in `qa/annotation-v3-desktop-hero.png` and `qa/annotation-v3-mobile-hero.png`.
-8. `[P2]` The exploded-view asset needed a clear place in the existing story sequence and a mobile-safe presentation.
-   - Fix: inserted a dedicated dark bridge section between specifications and installation scenes, preserved the native video composition on desktop, and used a `4 / 3` crop with stacked component labels on mobile.
-   - Result: resolved in `qa/exploded-desktop-heading.png`, `qa/exploded-desktop-video.png`, and `qa/exploded-mobile.png`.
-9. `[P2]` The local hero previously appeared immediately and omitted the reference site's loading and staged entrance choreography.
-   - Fix: added a matching multi-phase preloader, product close-up transition, delayed chrome/frame reveal, horizontal title mask, and final CTA entrance while preserving the existing end-state composition.
-   - Result: resolved on desktop and mobile in the `qa/intro-*` captures, compared against the corresponding `qa/reference-lightweight-*` frames.
-10. `[P2]` The Layers progress state still showed the assembled booth even though the chapter describes its multi-layer construction.
-   - Fix: generated a transparent exploded assembly from the supplied product video, crossfaded it into the right-hand product zone only during `02 / 多層構造`, aligned the three callouts around the separated components, and stacked the asset below the copy on mobile.
-   - Result: resolved in `qa/layers-exploded-desktop.png` and `qa/layers-exploded-mobile.png`; the exploded visual returns to zero opacity in the Focus and Color stages.
-11. `[P2]` The assembled-to-exploded handoff was a static crossfade and did not feel connected to the preceding scroll choreography.
-   - Fix: split the existing transparent render into scroll-controlled core, roof, felt, and shell layers. The parts begin clustered over the assembled booth, ease into their final positions, then regroup before the next chapter; callouts enter with the separation progress and reduced-motion users receive the complete static view.
-   - Result: the fully open state remains visually identical to the approved layout, while intermediate desktop and mobile states pass in `qa/layers-scroll-transition-desktop-mid.png`, `qa/layers-scroll-transition-desktop-open.png`, `qa/layers-scroll-transition-mobile-mid.png`, and `qa/layers-scroll-transition-mobile-open.png`.
-12. `[P2]` During the crossfade, the assembled booth and regrouped exploded render still read as two adjacent objects.
-   - Fix: bound both renders to the same responsive center and vertical anchor during entry and exit, delayed component separation until the assembled render has faded, completed regrouping before the next chapter begins, and shortened the final crossfade after alignment.
-   - Result: the transition reads as one object changing state on desktop and mobile in `qa/layers-single-object-enter-desktop.png`, `qa/layers-single-object-next-desktop.png`, and `qa/layers-single-object-enter-mobile.png`.
-13. `[P2]` The opening loader showed only a time-based bar, so it could not communicate actual asset readiness or a numeric loading state.
-   - Fix: replaced the fixed animation with task-driven progress for critical images, fonts, and video metadata; added a tabular live percentage and delayed the product reveal until 100%.
-   - Result: the line position and proportions match the supplied `1920 × 929` reference in `qa/loader-progress-desktop.png`; the `390 × 844` state has no horizontal overflow, the progress semantics update, and the 100% wipe connects cleanly to the existing intro.
+## Visual checks
 
-## Functional checks
+- Header height, three-column desktop navigation, italic wordmark treatment, pill search control, fine borders, and corner registration marks align with the reference anatomy.
+- The opening scene uses a black full-screen loader with one centered 2 px progress line, followed by staged header, frame, product, headline, and CTA reveals.
+- The main narrative is one continuous sticky scene: 500vh on desktop and 750svh on mobile.
+- Product scale and crop follow the reference rhythm: oversized/cropped opening, left-side performance composition, centered close-up craft scene, right-side exploded construction scene, and left-side final product presentation.
+- The header switches between dark and pale surfaces in sync with the story and later dark sections.
+- Mobile menu and expanded search match the reference dimensions and hierarchy without covering the whole product scene.
+- Editorial sections match the reference order and density: wide product film, three-card image grid, full-height dark media statement, split image/contact form, and large black footer.
+- No P0 or P1 overflow, clipping, contrast, spacing, or responsive layout defects remain in the compared states.
 
-- Header navigation anchors, the new structure-analysis anchor, and the mobile menu.
-- Chapter rail jumps for Focus, color, and final form states.
-- Chapter rail jump for Layers now lands on the fully expanded structure state; Focus and Color restore the assembled product.
-- Search overlay, Japanese query filtering, and close behavior.
-- Both local videos render on desktop and mobile; exploded-view play/pause state was exercised in-browser.
-- Fresh-load asset-driven percentage, 100% loader exit, body scroll lock release, title/CTA completion, and CTA transition into the Focus chapter.
-- Desktop and mobile opening composition.
-- Production build and Sites packaging.
+## Interaction checks
 
-## Verification
+- Desktop and mobile navigation anchors work.
+- Chapter rail buttons scroll to their corresponding story states.
+- Mobile menu opens/closes and exposes all primary links.
+- Search expands, accepts input, filters realistic page destinations, and closes with the header or inline close control.
+- Product film pauses and resumes; the accessible label updates with playback state.
+- Contact form accepts a valid email and returns an inline success state without an external write.
+- Browser console contains no application errors; only Vite/React development information messages were present.
 
-- `npm run build`: passed.
-- `npm run test:sites`: 4/4 passed.
-- Browser console warnings/errors during loader completion: none.
-- Final viewport override was reset after responsive testing.
+## Intentional differences
+
+- SNAPOD identity, Japanese copy, local scene photography/video, and the real SNAPOD GLB replace all Lightweight branding and wheel imagery.
+- The exploded scene follows SNAPOD's real installation assemblies and hinge animation, so component silhouettes and separation distances reflect the booth rather than the reference wheel.
+- Local SNAPOD fonts are used instead of copying the reference site's proprietary font files.
+
+## Build checks
+
+- `npm.cmd run build`: passed.
+- `npm.cmd run test:sites`: passed (4/4 tests).
+
+## Browser annotation revision — 2026-08-12
+
+Source truth: the user annotation on `section#product > div.story-sticky`, requesting product-accurate color on the exploded assembly and softer story handoffs.
+
+- Replaced the generic blue/white CAD appearance at runtime with a semantic SNAPOD finish map: sage exterior skins, charcoal structural/hardware parts, graphite textile/floor assemblies, and neutral translucent glass.
+- Kept the material mapping tied to stable `moduleId` / `partId` metadata; no positional mesh-index dependency was introduced.
+- Removed simultaneous raster/model overlap that produced a ghosted double booth. The implementation now uses staggered opacity windows, a lighter 2 px maximum transition defocus, and an earlier model zoom-out before the structure chapter.
+- Widened chapter-copy, technical-field, background-tone, and final-product transition windows while retaining deterministic scroll-scrubbing.
+- Desktop QA states: `qa/snapod/annotation-transition-entry-final.png`, `qa/snapod/annotation-exploded-color-final.png`, and `qa/snapod/annotation-product-final.png`.
+- Mobile QA states: `qa/snapod/annotation-mobile-exploded-final.png` and `qa/snapod/annotation-mobile-product-final.png`.
+- Checked desktop and 375 × 812 mobile layouts. No new overlap, clipping, double-model ghosting, or application console errors remained.
+
+final result: passed
+
+## Information deck continuation QA — 2026-08-24
+
+### Comparison target and evidence
+
+- Source visual truth: `C:/Users/Administrator/AppData/Local/Temp/codex-clipboard-68c9407d-f7cf-4fbb-813b-a9e45f784b18.png` — user-selected information-page composition, 1258 × 636 px.
+- Secondary source visual truth: `public/assets/scenes/quiet-work-statement-v1.webp` — approved static statement scene, 1672 × 941 px.
+- Desktop implementation viewport: 970 × 654 CSS px at device scale factor 1 in the in-app browser.
+- Implementation captures: `qa/snapod/implementation-deck-overview-final.png` and `qa/snapod/implementation-statement-header-final.png`, each 961 × 648 px browser content capture.
+- Full-view comparison: `qa/snapod/compare-deck-overview-final.png`. The source was uniformly normalized to 961 × 486 px; the implementation comparison uses its post-header content region (x 0–961, y 80–566) to avoid treating fixed browser/header chrome as a layout mismatch. This focused comparison covers the specification strip, values, labels, and first editorial anchor. A separate focused statement capture was required because its new image is an intentional replacement rather than a copy of the prior video frame.
+
+### Findings and iteration history
+
+- [P1 fixed] Specification values hidden by the fixed header at compact desktop widths.
+  Evidence: the first in-app capture exposed only labels and body copy; the `strong` value row sat beneath the 80 px fixed header.
+  Fix: reserved `--header-h` within `.overview-section` so the three primary values begin below the header.
+  Post-fix: the comparison capture shows `30 dB*`, `40 m³/h`, and `POWER / USB` intact in all three columns.
+
+- [P2 fixed] Legacy pixel minimum heights broke the whole-page deck on a 654 px-high desktop viewport.
+  Evidence: `.film-section` resolved to 680 px, placing film metadata below the viewport.
+  Fix: overview, film, spaces, and statement now use their live `100svh` height inside the desktop deck; the longer contact form remains intentionally scrollable.
+  Post-fix: the film frame resolves to 653.8 px and its metadata ends at 630.1 px, within the viewport.
+
+- [P1 fixed] Header tone did not react to nested information-deck scrolling.
+  Evidence: the dark statement page retained the preceding pale header, despite the declared dark-surface behavior.
+  Fix: connected the update scheduler to `.information-pages` scroll events as well as window scroll.
+  Post-fix: statement capture uses `data-story-tone="dark"`, an rgba(6, 7, 7, 0.92) header, and light navigation text; the consultation page correctly returns to light.
+
+### Required fidelity surfaces
+
+- Typography and copy: source Japanese values, labels, unit notation, and the `MADE FOR FOCUS` hierarchy are retained; no wrapping/truncation remains in the tested desktop view.
+- Spacing and rhythm: the top safety inset is intentional to accommodate the persistent 80 px header; the specification strip, editorial anchor, and full-viewport transitions remain evenly spaced.
+- Colors and tokens: pale product-information pages use the light header treatment; the static lifestyle statement and footer use the dark header treatment for contrast.
+- Image quality and asset fidelity: the generated static WebP is sharp at the rendered size, shows the sage SNAPOD product accurately, and leaves an uncluttered dark copy field; no video element remains in the statement section.
+- Content and affordances: film play/pause, statement CTA, navigation anchors, and consultation page remained present in the DOM; no copy or action was removed for the layout correction.
+
+### Residual test gap
+
+- The in-app browser was available at the desktop viewport only for this iteration. Mobile rules retain natural scrolling and the dedicated `--header-h` inset, but this final pass did not capture a separate 375 px device viewport.
+
+final result: passed
+
+## Statement scene replacement — 2026-08-24
+
+Source truth: the user-selected `ENGINEERED QUIET` module and the newly generated SNAPOD lifestyle asset `public/assets/scenes/quiet-work-statement-v1.webp`.
+
+- Replaced the full-bleed background video with one static, project-local WebP scene; the rendered section contains zero video elements.
+- The generated scene preserves the booth's sage exterior, charcoal frame, gray felt interior, integrated desk/light/stool, and credible one-person scale.
+- The worker and product remain in the right half while the left side stays low-detail and dark enough for the existing Japanese headline and CTA.
+- The existing module typography, CTA behavior, full-height composition, header treatment, and desktop information-page snap behavior remain unchanged.
+- Verified in the in-app browser: the 1672 × 941 source image loaded completely, covered the full section, and the CTA remained visible and interactive.
+- Final implementation capture: `qa/snapod/implementation-statement-static-scene-final.png` (961 × 648).
+- No P0/P1/P2 clipping, missing-asset, contrast, or layout regression was found in this scoped revision.
 
 final result: passed

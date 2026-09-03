@@ -7,6 +7,14 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 const MODEL_URL = "/assets/models/snapod-assembly.glb";
 const INSTALL_CLIP_NAME = "SNAPOD_INSTALL_V1";
 
+const PRODUCT_FINISH = {
+  sage: "#6f8375",
+  charcoal: "#101412",
+  graphite: "#2f3531",
+  textile: "#555b57",
+  glass: "#b4cdc4",
+};
+
 function smoothstep(value) {
   const t = Math.min(1, Math.max(0, value));
   return t * t * (3 - 2 * t);
@@ -26,6 +34,65 @@ function makeShadowTexture() {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
+}
+
+function applyProductFinish(mesh) {
+  const moduleId = mesh.userData?.moduleId || "";
+  const partId = mesh.userData?.partId || "";
+  const sourceMaterials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+
+  const finishedMaterials = sourceMaterials.map((sourceMaterial) => {
+    const material = sourceMaterial.clone();
+    const materialName = sourceMaterial.name || "";
+    const isGlass = materialName.includes("Glass") || moduleId === "fixed-glass" && sourceMaterial.transparent;
+    const isBlackHardware = materialName.includes("BlackHardware");
+    const isOuterSkin = partId.endsWith("outer-skin");
+    const isFabricAssembly = ["rear-wall", "service-wall"].includes(moduleId);
+    const isDarkAssembly = [
+      "base",
+      "frame-core",
+      "roof",
+      "door-jamb",
+      "door-leaf",
+      "fixed-glass",
+      "column-covers",
+    ].includes(moduleId);
+
+    if (isGlass) {
+      material.color.set(PRODUCT_FINISH.glass);
+      material.roughness = 0.12;
+      material.metalness = 0;
+      material.transmission = Math.max(material.transmission || 0, 0.68);
+      material.opacity = 0.3;
+      material.transparent = true;
+      material.depthWrite = false;
+    } else if (isBlackHardware || isDarkAssembly) {
+      material.color.set(PRODUCT_FINISH.charcoal);
+      material.roughness = 0.32;
+      material.metalness = 0.5;
+    } else if (isOuterSkin) {
+      material.color.set(PRODUCT_FINISH.sage);
+      material.roughness = 0.62;
+      material.metalness = 0.08;
+    } else if (moduleId === "carpet") {
+      material.color.set(PRODUCT_FINISH.graphite);
+      material.roughness = 0.94;
+      material.metalness = 0;
+    } else if (isFabricAssembly) {
+      material.color.set(PRODUCT_FINISH.textile);
+      material.roughness = 0.86;
+      material.metalness = 0.02;
+    } else {
+      material.color.set(PRODUCT_FINISH.graphite);
+      material.roughness = 0.58;
+      material.metalness = 0.14;
+    }
+
+    material.needsUpdate = true;
+    return material;
+  });
+
+  mesh.material = Array.isArray(mesh.material) ? finishedMaterials : finishedMaterials[0];
 }
 
 export function SnapodScrollModel({ stageRef }) {
@@ -105,6 +172,7 @@ export function SnapodScrollModel({ stageRef }) {
         modelRoot.traverse((object) => {
           if (!object.isMesh) return;
           object.frustumCulled = true;
+          applyProductFinish(object);
           if (Array.isArray(object.material)) {
             object.material.forEach((material) => {
               if (material.transparent) material.depthWrite = false;
@@ -164,7 +232,7 @@ export function SnapodScrollModel({ stageRef }) {
         ? 1
         : Number.parseFloat(styles?.getPropertyValue("--exploded-t")) || 0;
       const sceneLight = Number.parseFloat(styles?.getPropertyValue("--light")) || 0;
-      currentExplosion += (smoothstep(requestedExplosion) - currentExplosion) * 0.085;
+      currentExplosion += (smoothstep(requestedExplosion) - currentExplosion) * 0.055;
 
       if (assemblyMixer && assemblyClip) {
         assemblyMixer.setTime(assemblyClip.duration * (1 - currentExplosion));
@@ -213,7 +281,7 @@ export function SnapodScrollModel({ stageRef }) {
   }, [stageRef]);
 
   return (
-    <div ref={shellRef} className="snapod-scroll-model" data-state={state}>
+    <div ref={shellRef} className="snapod-scroll-model" data-state={state} data-finish="sage-v1">
       <canvas ref={canvasRef} />
       <img src="/assets/products/pod-exploded-cutout.png" alt="" />
       <div className="snapod-scroll-model__loading">
