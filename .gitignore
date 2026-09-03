@@ -7,3 +7,6 @@ qa/
 dist/
 dist-engineering/
 *.log
+
+# Local Netlify folder
+.netlify
