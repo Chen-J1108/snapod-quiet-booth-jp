@@ -354,6 +354,7 @@ function StoryStage({ stageRef }) {
         <div className="chapter chapter--hero">
           <p className="chapter__eyebrow">空間の中に、もうひとつの静かな空間を。</p>
           <h1>静けさを、<br />設計する。</h1>
+          <p className="chapter__subtitle">ひとりの集中に、静かな輪郭を。</p>
           <button
             className="pill-button pill-button--ghost"
             type="button"

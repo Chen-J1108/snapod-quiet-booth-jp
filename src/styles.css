@@ -29,6 +29,7 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --header-h: 80px;
+  --display-font: "BIZ UDPGothic", "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", sans-serif;
 }
 
 * {
@@ -196,8 +197,12 @@ body.intro-locked {
   animation: intro-title-reveal 0.92s cubic-bezier(0.76, 0, 0.24, 1) 2.04s both;
 }
 
+.site-shell.is-intro.is-intro-ready .chapter--hero .chapter__subtitle {
+  animation: intro-fade-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 2.62s both;
+}
+
 .site-shell.is-intro.is-intro-ready .chapter--hero .pill-button {
-  animation: intro-fade-up 0.64s cubic-bezier(0.2, 0.7, 0.2, 1) 2.8s both;
+  animation: intro-fade-up 0.64s cubic-bezier(0.2, 0.7, 0.2, 1) 2.92s both;
 }
 
 button,
@@ -854,9 +859,9 @@ body[data-story-tone="dark"] .brand-logo--header {
 .section-heading h2,
 .site-footer h2 {
   margin: 0;
-  font-family: "SNAPOD Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
-  font-weight: 300;
-  letter-spacing: -0.045em;
+  font-family: var(--display-font);
+  font-weight: 400;
+  letter-spacing: -0.06em;
   line-height: 0.98;
 }
 
@@ -887,7 +892,21 @@ body[data-story-tone="dark"] .brand-logo--header {
 }
 
 .chapter--hero h1 {
+  letter-spacing: -0.075em;
   text-shadow: 0 10px 50px rgb(0 0 0 / 42%);
+}
+
+.chapter--hero .chapter__subtitle {
+  margin: clamp(16px, 2vh, 22px) auto 0;
+  color: rgb(243 244 239 / 62%);
+  font-size: clamp(11px, 0.82vw, 13px);
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0.18em;
+}
+
+.chapter--hero .chapter__subtitle + .pill-button {
+  margin-top: clamp(20px, 2.8vh, 28px);
 }
 
 .chapter--focus {
@@ -1554,6 +1573,13 @@ body[data-story-tone="dark"] .brand-logo--header {
     right: auto;
     top: 19%;
     width: 88vw;
+  }
+
+  .chapter--hero .chapter__subtitle {
+    max-width: 86vw;
+    margin-top: 14px;
+    font-size: 10px;
+    letter-spacing: 0.13em;
   }
 
   .chapter--focus,
