@@ -132,8 +132,21 @@ button {
   color: #f4f5f1;
 }
 
-.intro-loader__brand .wordmark {
-  font-size: 28px;
+.brand-link {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.brand-logo--loader {
+  width: clamp(118px, 9vw, 148px);
 }
 
 .intro-loader__brand > span:last-child {
@@ -296,14 +309,22 @@ body[data-story-tone="dark"] .site-header {
   background: rgba(5, 6, 6, 0.92);
 }
 
-.wordmark {
-  width: max-content;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 25px;
-  line-height: 1;
-  font-weight: 700;
-  font-style: italic;
-  letter-spacing: -1.5px;
+.brand-logo--header {
+  width: clamp(108px, 8.5vw, 136px);
+  transition: filter 0.4s ease, opacity 0.25s ease;
+}
+
+body[data-story-tone="light"] .brand-logo--header {
+  filter: brightness(0) saturate(100%);
+}
+
+body[data-story-tone="dark"] .brand-logo--header {
+  filter: none;
+}
+
+.brand-link:hover .brand-logo--header,
+.brand-link:focus-visible .brand-logo--header {
+  opacity: 0.68;
 }
 
 .desktop-nav {
@@ -1706,17 +1727,11 @@ body[data-story-tone="dark"] .site-header {
 
 .footer-wordmark {
   position: absolute;
-  right: -1.8vw;
-  bottom: 26px;
-  left: -1.8vw;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 17.4vw;
-  line-height: 0.72;
-  font-weight: 700;
-  font-style: italic;
-  letter-spacing: -0.08em;
-  white-space: nowrap;
-  opacity: 0.055;
+  right: -3vw;
+  bottom: -1.8vw;
+  width: min(94vw, 1480px);
+  max-width: none;
+  opacity: 0.06;
   pointer-events: none;
 }
 
@@ -1731,6 +1746,10 @@ body[data-story-tone="dark"] .site-header {
 .footer-intro p {
   margin: 20px 0 0;
   font-size: 13px;
+}
+
+.brand-logo--footer {
+  width: clamp(132px, 11vw, 174px);
 }
 
 .footer-group {
@@ -1859,8 +1878,8 @@ body[data-story-tone="dark"] .site-header {
     left: 20px;
   }
 
-  .intro-loader__brand .wordmark {
-    font-size: 24px;
+  .brand-logo--loader {
+    width: 112px;
   }
 
   .intro-loader__brand > span:last-child {
@@ -1901,8 +1920,9 @@ body[data-story-tone="dark"] .site-header {
     background: #050606;
   }
 
-  .wordmark {
-    font-size: 24px;
+  .brand-logo--header {
+    width: 106px;
+    filter: none !important;
   }
 
   .desktop-nav { display: none; }
@@ -2213,8 +2233,9 @@ body[data-story-tone="dark"] .site-header {
   }
 
   .footer-wordmark {
-    bottom: 80px;
-    font-size: 20vw;
+    right: -8vw;
+    bottom: 64px;
+    width: 116vw;
   }
 
   .footer-meta {

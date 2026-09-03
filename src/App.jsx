@@ -18,6 +18,9 @@ import { hoverLift } from "./lib/anime-effects.js";
 const SnapodScrollModel = lazy(() => import("./SnapodScrollModel.jsx")
   .then((module) => ({ default: module.SnapodScrollModel })));
 
+const BRAND_NAME = "Tuliko";
+const BRAND_LOGO_SRC = "/assets/brand/tuliko-logo.png";
+
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const lerp = (from, to, amount) => from + (to - from) * amount;
 const smooth = (value) => {
@@ -65,6 +68,17 @@ function CornerFrame() {
   );
 }
 
+function BrandLogo({ className = "", decorative = false }) {
+  return (
+    <img
+      className={`brand-logo ${className}`.trim()}
+      src={BRAND_LOGO_SRC}
+      alt={decorative ? "" : BRAND_NAME}
+      aria-hidden={decorative || undefined}
+    />
+  );
+}
+
 function MaskedLines({ as: Tag = "h2", lines, className = "" }) {
   const label = lines.join(" ");
   return (
@@ -93,7 +107,7 @@ function IntroLoader({ active, progress, complete }) {
       }}
     >
       <div className="intro-loader__brand" aria-hidden="true">
-        <span className="wordmark">SNAPOD</span>
+        <BrandLogo className="brand-logo--loader" decorative />
         <span>QUIET SPACE / SPD01</span>
       </div>
       <img
@@ -124,7 +138,9 @@ function Header({ menuOpen, searchOpen, onMenuToggle, onSearchToggle }) {
   return (
     <>
       <header className="site-header">
-        <a className="wordmark" href="#top" aria-label="SNAPOD ホーム">SNAPOD</a>
+        <a className="brand-link" href="#top" aria-label={`${BRAND_NAME} ホーム`}>
+          <BrandLogo className="brand-logo--header" decorative />
+        </a>
         <nav className="desktop-nav" aria-label="メインナビゲーション">
           {navItems.map((item) => <a key={item.href} href={item.href}>{item.label}</a>)}
         </nav>
@@ -191,7 +207,7 @@ function SearchPanel({ open, onClose }) {
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="SNAPODを検索"
+          placeholder={`${BRAND_NAME}を検索`}
           aria-label="サイト内検索"
           tabIndex={open ? 0 : -1}
         />
@@ -251,7 +267,7 @@ function TechnicalField() {
 
 function StoryStage({ stageRef }) {
   return (
-    <section className="story-stage" id="product" ref={stageRef} aria-label="スクロールで見るSNAPOD製品ストーリー">
+    <section className="story-stage" id="product" ref={stageRef} aria-label={`スクロールで見る${BRAND_NAME} SPD01製品ストーリー`}>
       <div className="story-sticky">
         <CornerFrame />
         <ScrollRail stageRef={stageRef} />
@@ -305,7 +321,7 @@ function StoryStage({ stageRef }) {
         </article>
 
         <article className="chapter chapter--product">
-          <p className="chapter__eyebrow">04 / SNAPOD SPD01</p>
+          <p className="chapter__eyebrow">04 / {BRAND_NAME.toUpperCase()} SPD01</p>
           <MaskedLines lines={["ひとり用の、", "集中ブース。"]} />
           <p className="chapter__copy">W1000 × D1000 × H2300 mm。オフィスの余白に置ける、最小限の静かな部屋。</p>
           <a className="pill-button pill-button--solid" href="#spaces">導入シーンを見る <ArrowRight size={16} strokeWidth={1.35} /></a>
@@ -361,7 +377,7 @@ function FilmSection() {
   };
 
   return (
-    <section className="film-section information-page" id="story" aria-label="SNAPOD製品映像">
+    <section className="film-section information-page" id="story" aria-label={`${BRAND_NAME} SPD01製品映像`}>
       <figure className="film-frame">
         <video
           ref={videoRef}
@@ -370,7 +386,7 @@ function FilmSection() {
           autoPlay muted loop playsInline preload="metadata"
           onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
         />
-        <figcaption><span>SNAPOD / PRODUCT FILM</span><span>00:18</span></figcaption>
+        <figcaption><span>{BRAND_NAME.toUpperCase()} / SPD01 PRODUCT FILM</span><span>00:18</span></figcaption>
         <button type="button" onClick={toggle} aria-label={playing ? "動画を一時停止" : "動画を再生"}>
           {playing ? <Pause size={16} strokeWidth={1.3} /> : <Play size={16} strokeWidth={1.3} />}
           {playing ? "PAUSE" : "PLAY FILM"}
@@ -395,7 +411,7 @@ function SpacesSection() {
       <div className="spaces-grid">
         {cards.map(([src, label, copy], index) => (
           <figure className="space-card" key={label}>
-            <img src={src} alt={`${label}に設置されたSNAPOD`} loading="lazy" />
+            <img src={src} alt={`${label}に設置された${BRAND_NAME} SPD01`} loading="lazy" />
             <figcaption><span>0{index + 1} / {label}</span><strong>{copy}</strong></figcaption>
           </figure>
         ))}
@@ -467,7 +483,7 @@ function ContactSection() {
 
   return (
     <section className="contact-section information-page" id="contact">
-      <img src="/assets/scenes/lounge.webp" alt="ラウンジに設置されたSNAPOD" loading="lazy" />
+      <img src="/assets/scenes/lounge.webp" alt={`ラウンジに設置された${BRAND_NAME} SPD01`} loading="lazy" />
       <div className="contact-card">
         <div className="contact-card__header">
           <div className="contact-card__meta">
@@ -496,7 +512,7 @@ function ContactSection() {
               </label>
               <label className="consultation-form__field">
                 <span><b>02</b> 会社名 <em>必須</em></span>
-                <input name="company" type="text" autoComplete="organization" required placeholder="株式会社SNAPOD" />
+                <input name="company" type="text" autoComplete="organization" required placeholder="例：株式会社〇〇" />
               </label>
             </div>
             <label className="consultation-form__field consultation-form__field--full">
@@ -616,14 +632,19 @@ function Footer() {
   return (
     <footer className="site-footer">
       <CornerFrame />
-      <div className="footer-wordmark" aria-hidden="true">SNAPOD</div>
+      <BrandLogo className="footer-wordmark" decorative />
       <div className="footer-grid">
-        <div className="footer-intro"><a className="wordmark" href="#top">SNAPOD</a><p>静けさを、設計する。</p></div>
+        <div className="footer-intro">
+          <a className="brand-link" href="#top" aria-label={`${BRAND_NAME} ホーム`}>
+            <BrandLogo className="brand-logo--footer" decorative />
+          </a>
+          <p>静けさを、設計する。</p>
+        </div>
         {groups.map(([title, links]) => (
           <div className="footer-group" key={title}><p>{title}</p>{links.map((link) => <a href="#top" key={link}>{link}</a>)}</div>
         ))}
       </div>
-      <div className="footer-meta"><span>© 2026 SNAPOD</span><span>JAPAN / SHANGHAI</span><a href="#top">BACK TO TOP ↑</a></div>
+      <div className="footer-meta"><span>© 2026 {BRAND_NAME}</span><span>JAPAN / SHANGHAI</span><a href="#top">BACK TO TOP ↑</a></div>
     </footer>
   );
 }
@@ -935,7 +956,7 @@ export function App() {
       <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} />
       <main>
         <StoryStage stageRef={stageRef} />
-        <div ref={informationRef} className="information-pages" aria-label="SNAPOD製品情報">
+        <div ref={informationRef} className="information-pages" aria-label={`${BRAND_NAME} SPD01製品情報`}>
           <OverviewSection />
           <FilmSection />
           <SpacesSection />
