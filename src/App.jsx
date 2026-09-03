@@ -17,6 +17,9 @@ const SnapodScrollModel = lazy(() => import("./SnapodScrollModel.jsx")
 
 const BRAND_NAME = "Tuliko";
 const BRAND_LOGO_SRC = "/assets/brand/tuliko-logo.png";
+const EXPLODED_VIDEO_SRC = "/assets/video/snapod-exploded-showcase.mp4";
+const EXPLODED_VIDEO_POSTER = "/assets/video/snapod-exploded-poster.webp";
+const EXPLODED_VIDEO_DURATION_LABEL = "10 SEC";
 
 const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const lerp = (from, to, amount) => from + (to - from) * amount;
@@ -484,7 +487,7 @@ function ExplodedSection() {
         </div>
         <p>
           フレーム、吸音パネル、外装パネルを順に分解・再構成。
-          静かな集中空間を支える主要部材を、6秒の映像で確認できます。
+          静かな集中空間を支える主要部材を、10秒の映像で確認できます。
           <small>※映像は構造を分かりやすく示したイメージです。</small>
         </p>
       </div>
@@ -493,8 +496,8 @@ function ExplodedSection() {
         <div className="exploded-video">
           <video
             ref={videoRef}
-            src="/assets/video/snapod-story-exploded-v2.mp4"
-            poster="/assets/video/snapod-story-exploded-v2-poster.webp"
+            src={EXPLODED_VIDEO_SRC}
+            poster={EXPLODED_VIDEO_POSTER}
             autoPlay
             muted
             loop
@@ -506,7 +509,7 @@ function ExplodedSection() {
           />
           <div className="exploded-video__meta" aria-hidden="true">
             <span>STRUCTURE / 01</span>
-            <span>6 SEC</span>
+            <span>{EXPLODED_VIDEO_DURATION_LABEL}</span>
           </div>
           <button
             className="exploded-video__control"
@@ -675,12 +678,12 @@ export function App() {
       "/assets/scenes/atrium.webp",
       "/assets/scenes/library.webp",
       "/assets/products/pod-exploded-cutout.png",
-      "/assets/video/snapod-story-exploded-v2-poster.webp",
+      EXPLODED_VIDEO_POSTER,
     ].map(loadImage);
 
     assetTasks.push(
       loadVideoMetadata("/assets/video/snapod-story.mp4"),
-      loadVideoMetadata("/assets/video/snapod-story-exploded-v2.mp4"),
+      loadVideoMetadata(EXPLODED_VIDEO_SRC),
       loadBinary("/assets/models/snapod-assembly.glb"),
       document.fonts?.ready ?? Promise.resolve(),
     );
