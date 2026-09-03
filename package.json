@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "model:build": "node scripts/convert-snapod-step.mjs",
+    "model:prepare-glb": "node scripts/prepare-component-glb.mjs",
     "engineering:dev": "vite --config vite.engineering.config.mjs",
     "engineering:build": "vite build --config vite.engineering.config.mjs",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
@@ -23,6 +24,10 @@
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.4.2",
+    "@gltf-transform/core": "^4.4.2",
+    "@gltf-transform/extensions": "^4.4.2",
+    "@gltf-transform/functions": "^4.4.2",
+    "meshoptimizer": "^1.0.1",
     "occt-import-js": "^0.0.23"
   }
 }

@@ -1,0 +1,85 @@
+{
+  "sourceFile": "Snapod(小号)白色静音仓.glb",
+  "outputFile": "snapod-white-components.glb",
+  "sourceBytes": 18231044,
+  "outputBytes": 1964148,
+  "dimensionsMeters": [
+    1,
+    2.3196,
+    1.0481
+  ],
+  "sourceMeshCount": 252,
+  "sourceNodeCount": 504,
+  "sourcePartCount": 252,
+  "animationCount": 0,
+  "groups": {
+    "roof": {
+      "label": "Roof assembly",
+      "partCount": 71,
+      "explodeOffset": [
+        0,
+        0.92,
+        0
+      ]
+    },
+    "base": {
+      "label": "Base assembly",
+      "partCount": 73,
+      "explodeOffset": [
+        0,
+        -0.62,
+        0
+      ]
+    },
+    "left-wall": {
+      "label": "Left wall assembly",
+      "partCount": 55,
+      "explodeOffset": [
+        -1.18,
+        0,
+        0
+      ]
+    },
+    "right-wall": {
+      "label": "Right wall assembly",
+      "partCount": 28,
+      "explodeOffset": [
+        1.18,
+        0,
+        0
+      ]
+    },
+    "front-glass": {
+      "label": "Front door and glass",
+      "partCount": 11,
+      "explodeOffset": [
+        0,
+        0,
+        -1.24
+      ]
+    },
+    "rear-glass": {
+      "label": "Rear glass assembly",
+      "partCount": 12,
+      "explodeOffset": [
+        0,
+        0,
+        1.12
+      ]
+    },
+    "interior": {
+      "label": "Interior fittings",
+      "partCount": 2,
+      "explodeOffset": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "inferredMaterials": {
+    "whitePanels": "large vertical X-thin planes",
+    "glass": "large vertical Z-thin planes",
+    "note": "The source GLB did not include semantic accessory names; groups were inferred from spatial position."
+  }
+}

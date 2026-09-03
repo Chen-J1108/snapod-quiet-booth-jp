@@ -4,7 +4,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
-const MODEL_URL = "/assets/models/snapod-assembly.glb";
+const MODEL_URL = "/assets/models/snapod-white-components.glb";
 const INSTALL_CLIP_NAME = "SNAPOD_INSTALL_V1";
 
 const PRODUCT_FINISH = {
@@ -13,6 +13,8 @@ const PRODUCT_FINISH = {
   graphite: "#2f3531",
   textile: "#555b57",
   glass: "#b4cdc4",
+  white: "#d9dcd8",
+  lightMetal: "#bfc4c1",
 };
 
 function smoothstep(value) {
@@ -37,15 +39,29 @@ function makeShadowTexture() {
 }
 
 function applyProductFinish(mesh) {
-  const moduleId = mesh.userData?.moduleId || "";
-  const partId = mesh.userData?.partId || "";
+  const inheritedData = (key) => {
+    let current = mesh;
+    while (current) {
+      if (current.userData?.[key] !== undefined) return current.userData[key];
+      current = current.parent;
+    }
+    return "";
+  };
+  const moduleId = inheritedData("moduleId");
+  const partId = inheritedData("partId");
   const sourceMaterials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
 
   const finishedMaterials = sourceMaterials.map((sourceMaterial) => {
     const material = sourceMaterial.clone();
     const materialName = sourceMaterial.name || "";
-    const isGlass = materialName.includes("Glass") || moduleId === "fixed-glass" && sourceMaterial.transparent;
+    const isGlass = materialName.includes("Glass")
+      || ["front-glass", "rear-glass", "fixed-glass"].includes(moduleId) && sourceMaterial.transparent;
     const isBlackHardware = materialName.includes("BlackHardware");
+    const isWhitePanel = materialName.includes("WhitePanel")
+      || ["left-wall", "right-wall"].includes(moduleId) && !isBlackHardware;
+    const isLightHardware = materialName.includes("LightHardware");
+    const isAccent = materialName.includes("Accent");
+    const isPreparedCarpet = materialName.includes("Carpet");
     const isOuterSkin = partId.endsWith("outer-skin");
     const isFabricAssembly = ["rear-wall", "service-wall"].includes(moduleId);
     const isDarkAssembly = [
@@ -62,19 +78,31 @@ function applyProductFinish(mesh) {
       material.color.set(PRODUCT_FINISH.glass);
       material.roughness = 0.12;
       material.metalness = 0;
-      material.transmission = Math.max(material.transmission || 0, 0.68);
-      material.opacity = 0.3;
+      material.opacity = 0.24;
       material.transparent = true;
       material.depthWrite = false;
+      material.side = THREE.DoubleSide;
+    } else if (isWhitePanel) {
+      material.color.set(PRODUCT_FINISH.white);
+      material.roughness = 0.62;
+      material.metalness = 0.06;
     } else if (isBlackHardware || isDarkAssembly) {
       material.color.set(PRODUCT_FINISH.charcoal);
       material.roughness = 0.32;
       material.metalness = 0.5;
+    } else if (isLightHardware) {
+      material.color.set(PRODUCT_FINISH.lightMetal);
+      material.roughness = 0.44;
+      material.metalness = 0.32;
+    } else if (isAccent) {
+      material.color.set(PRODUCT_FINISH.sage);
+      material.roughness = 0.58;
+      material.metalness = 0.08;
     } else if (isOuterSkin) {
       material.color.set(PRODUCT_FINISH.sage);
       material.roughness = 0.62;
       material.metalness = 0.08;
-    } else if (moduleId === "carpet") {
+    } else if (moduleId === "carpet" || isPreparedCarpet) {
       material.color.set(PRODUCT_FINISH.graphite);
       material.roughness = 0.94;
       material.metalness = 0;
@@ -166,7 +194,7 @@ export function SnapodScrollModel({ stageRef }) {
       (gltf) => {
         if (disposed) return;
         modelRoot = gltf.scene;
-        modelRoot.name = "SNAPOD_Web_Assembly";
+        modelRoot.name = "TULIKO_SPD01_Web_Assembly";
         modelRoot.rotation.y = -0.5;
         modelRoot.scale.setScalar(0.92);
         modelRoot.traverse((object) => {
@@ -281,7 +309,7 @@ export function SnapodScrollModel({ stageRef }) {
   }, [stageRef]);
 
   return (
-    <div ref={shellRef} className="snapod-scroll-model" data-state={state} data-finish="sage-v1">
+    <div ref={shellRef} className="snapod-scroll-model" data-state={state} data-finish="white-v1">
       <canvas ref={canvasRef} />
       <img src="/assets/products/pod-exploded-cutout.png" alt="" />
       <div className="snapod-scroll-model__loading">
