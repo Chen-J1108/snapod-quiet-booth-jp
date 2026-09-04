@@ -804,13 +804,14 @@ export function App() {
       const explodedOut = 1 - segment(progress, 0.59, 0.625);
       const exploded = explodedIn * explodedOut;
       const explodedSeparation = segment(progress, 0.39, 0.45) * (1 - segment(progress, 0.55, 0.6));
-      const explodedAnchorX = compact ? x : x - 20;
+      const explodedChapterX = compact ? 0 : -6;
+      const explodedAnchorX = (compact ? x : x - 20) + explodedChapterX;
       const explodedAnchorY = y + (compact ? -7 : -4);
       const explodedSettle = segment(progress, 0.405, 0.45);
       const explodedReturn = segment(progress, 0.55, 0.6);
       const explodedX = progress < 0.45
-        ? lerp(explodedAnchorX, 0, explodedSettle)
-        : lerp(0, explodedAnchorX, explodedReturn);
+        ? lerp(explodedAnchorX, explodedChapterX, explodedSettle)
+        : lerp(explodedChapterX, explodedAnchorX, explodedReturn);
       const explodedY = progress < 0.45
         ? lerp(explodedAnchorY, 0, explodedSettle)
         : lerp(0, explodedAnchorY, explodedReturn);

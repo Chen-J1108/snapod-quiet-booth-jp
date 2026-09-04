@@ -69,6 +69,38 @@ Source truth: the user annotation on `section#product > div.story-sticky`, reque
 
 final result: passed
 
+## Layers model inward-position revision — 2026-09-04
+
+### Comparison target and evidence
+
+- Source visual truth: `C:/Users/Administrator/AppData/Local/Temp/codex-clipboard-7e189093-4ba4-4a17-9d89-cbdd2fddd47a.png` — user-annotated `02 / 多層構造` desktop frame, 1920 × 929 px.
+- Implementation desktop capture: `.tmp/qa-layers-after-source-state.png` — 1905 × 938 px capture at a 1920 × 945 CSS viewport, device scale factor 1, story progress `0.405`.
+- Implementation mobile capture: `.tmp/qa-layers-mobile.png` — 375 × 812 px capture at a 390 × 844 CSS viewport, device scale factor 1, story progress `0.450`.
+- Full-view comparison input: `.tmp/qa-layers-comparison.png` — source and implementation uniformly normalized to 1920 × 945 px and placed side by side. The desktop state is matched to the source's early separation phase; the red source annotation is treated only as the requested movement region.
+- A separate focused crop was unnecessary because the only changed surface is the full product/copy composition, which is legible in the full-view comparison.
+
+### Findings and comparison history
+
+- [P2 fixed] The desktop booth trajectory hugged the right frame and made the composition feel unbalanced.
+  Evidence: the source annotation encloses the product near the right edge; the pre-fix implementation kept the model container on the right-edge anchor throughout the entry and settled phases.
+  Fix: shifted the complete desktop exploded-model path 6vw inward while preserving the existing scale, vertical position, separation timing, and regroup motion.
+  Post-fix evidence: at progress `0.405` the product reads clearly inside the right product zone with a substantially larger outer margin, while the left copy retains its dedicated safe area. At progress `0.450` the fully separated model follows the same center without a lateral jump.
+
+### Required fidelity surfaces
+
+- Fonts and typography: unchanged; the Japanese eyebrow, headline, and explanatory copy retain the same font, weight, line height, and wrapping.
+- Spacing and layout rhythm: the product moved inward by 6vw on desktop only; size and vertical rhythm remain unchanged, and no readable copy is crossed by the visible model silhouette.
+- Colors and visual tokens: unchanged; the pale scene, ink values, technical guides, and callout opacity remain intact.
+- Image quality and asset fidelity: unchanged real-time CAD-derived GLB and material mapping; no raster scaling, background, or compression was introduced.
+- Copy and content: unchanged; chapter labels, callouts, rail, and product text remain complete.
+- Responsive result: the 390 × 844 mobile capture retains the prior centered model (`--exploded-x: 0vw`) with no horizontal overflow or copy collision.
+
+### Open questions and follow-up polish
+
+- None for this scoped adjustment. A further inward move would begin reducing the intentional separation between the left copy zone and the product silhouette at compact desktop widths.
+
+final result: passed
+
 ## Information deck continuation QA — 2026-08-24
 
 ### Comparison target and evidence
