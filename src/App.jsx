@@ -546,15 +546,10 @@ function SpacesSection() {
 
       <div className="spaces-grid">
         <figure className="space-card space-card--wide">
-          <video
-            src="/assets/video/snapod-story.mp4"
-            poster="/assets/scenes/lounge.webp"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-label={`ラウンジに設置した${BRAND_NAME} SPD01の使用イメージ動画`}
+          <img
+            src="/assets/scenes/lounge.webp"
+            alt={`ラウンジに設置した${BRAND_NAME} SPD01の使用イメージ`}
+            loading="lazy"
           />
           <figcaption><span>01</span> ラウンジ / 落ち着いて集中</figcaption>
         </figure>
@@ -682,7 +677,6 @@ export function App() {
     ].map(loadImage);
 
     assetTasks.push(
-      loadVideoMetadata("/assets/video/snapod-story.mp4"),
       loadVideoMetadata(EXPLODED_VIDEO_SRC),
       loadBinary("/assets/models/snapod-assembly.glb"),
       document.fonts?.ready ?? Promise.resolve(),
